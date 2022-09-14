@@ -1,15 +1,12 @@
 cmake_minimum_required(VERSION 3.5.0)
 
-project(Poco)
+project(macchina.io)
 
 file(STRINGS "${PROJECT_SOURCE_DIR}/libversion" SHARED_LIBRARY_VERSION)
 # Read the version information from the VERSION file
 file(STRINGS "${PROJECT_SOURCE_DIR}/VERSION" PACKAGE_VERSION)
-string(REGEX REPLACE "([0-9]+)\\.[0-9]+\\.[0-9]+.*" "\\1" CPACK_PACKAGE_VERSION_MAJOR ${PACKAGE_VERSION})
-string(REGEX REPLACE "[0-9]+\\.([0-9]+)\\.[0-9]+.*" "\\1" CPACK_PACKAGE_VERSION_MINOR ${PACKAGE_VERSION})
-string(REGEX REPLACE "[0-9]+\\.[0-9]+\\.([0-9]+).*" "\\1" CPACK_PACKAGE_VERSION_PATCH ${PACKAGE_VERSION})
 
-set(PROJECT_VERSION ${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH})
+set(PROJECT_VERSION ${PACKAGE_VERSION})
 set(RELEASE_NAME "Unstable-trunk")
 
 # Put the libaries and binaries that get built into directories at the
@@ -96,65 +93,6 @@ else()
 	option(ENABLE_JWT "Enable JWT" OFF)
 endif()
 
-if(ENABLE_APACHECONNECTOR)
-	find_package(APR REQUIRED)
-	find_package(APRUTIL REQUIRED)
-	find_package(Apache2 REQUIRED)
-else()
-	find_package(APR)
-	find_package(APRUTIL)
-	find_package(Apache2)
-endif()
-
-if(APR_FOUND AND APRUTIL_FOUND AND APACHE2_FOUND AND
-	EXISTS ${PROJECT_SOURCE_DIR}/ApacheConnector AND ENABLE_APACHECONNECTOR)
-	option(ENABLE_APACHECONNECTOR "Enable ApacheConnector" ON)
-else()
-	option(ENABLE_APACHECONNECTOR "Enable ApacheConnector" OFF)
-endif()
-
-if(ENABLE_DATA_MYSQL)
-	find_package(MySQL REQUIRED)
-else()
-	find_package(MySQL)
-endif()
-
-if(MYSQL_FOUND)
-	option(ENABLE_DATA "Enable Data" ON)
-	option(ENABLE_DATA_MYSQL "Enable Data MySQL or MariaDB" ON)
-else()
-	option(ENABLE_DATA "Enable Data" OFF)
-	option(ENABLE_DATA_MYSQL "Enable Data MySQL or MariaDB" OFF)
-endif()
-
-if(ENABLE_DATA_POSTGRESQL)
-	find_package(PostgreSQL REQUIRED)
-else()
-	find_package(PostgreSQL)
-endif()
-
-if(PostgreSQL_FOUND)
-	option(ENABLE_DATA "Enable Data" ON)
-	option(ENABLE_DATA_POSTGRESQL "Enable Data PosgreSQL" ON)
-else()
-	option(ENABLE_DATA "Enable Data" OFF)
-	option(ENABLE_DATA_POSTGRESQL "Enable Data PosgreSQL" OFF)
-endif()
-
-if(ENABLE_DATA_ODBC)
-	find_package(ODBC REQUIRED)
-else()
-	find_package(ODBC)
-endif()
-
-if(ODBC_FOUND)
-	option(ENABLE_DATA "Enable Data" ON)
-	option(ENABLE_DATA_ODBC "Enable Data ODBC" ON)
-else()
-	option(ENABLE_DATA "Enable Data" OFF)
-	option(ENABLE_DATA_ODBC "Enable Data ODBC" OFF)
-endif()
-
 # Allow enabling and disabling components
 option(ENABLE_FOUNDATION "Enable Foundation, required by all components except CppUnit" ON)
 option(ENABLE_ENCODINGS "Enable Encodings" ON)
@@ -167,6 +105,9 @@ option(ENABLE_REDIS "Enable Redis" ON)
 option(ENABLE_PDF "Enable PDF" OFF)
 option(ENABLE_UTIL "Enable Util" ON)
 option(ENABLE_NET "Enable Net" ON)
+
+# macchina.io
+option(ENABLE_SERIAL "Enable Serial" ON)
 
 option(ENABLE_SEVENZIP "Enable SevenZip" OFF)
 option(ENABLE_ZIP "Enable Zip" ON)
@@ -215,7 +156,7 @@ include(DefinePlatformSpecifc)
 set(Poco_COMPONENTS "")
 
 if(ENABLE_TESTS)
-	add_subdirectory(CppUnit)
+	add_subdirectory(platform/CppUnit)
 	set(ENABLE_XML ON CACHE BOOL "Enable XML" FORCE)
 	set(ENABLE_JSON ON CACHE BOOL "Enable JSON" FORCE)
 endif()
@@ -299,125 +240,127 @@ if(ENABLE_JWT)
 endif()
 
 if(ENABLE_FOUNDATION)
-	add_subdirectory(Foundation)
-endif()
-
-if(ENABLE_ENCODINGS)
-	add_subdirectory(Encodings)
-	list(APPEND Poco_COMPONENTS "Encodings")
+	add_subdirectory(platform/Foundation)
 endif()
 
 if(ENABLE_XML)
-	add_subdirectory(XML)
+	add_subdirectory(platform/XML)
 	list(APPEND Poco_COMPONENTS "XML")
 endif()
 
 if(ENABLE_JSON)
-	add_subdirectory(JSON)
+	add_subdirectory(platform/JSON)
 	list(APPEND Poco_COMPONENTS "JSON")
 endif()
 
 if(ENABLE_UTIL)
-	add_subdirectory(Util)
+	add_subdirectory(platform/Util)
 	list(APPEND Poco_COMPONENTS "Util")
 endif()
 
 if(ENABLE_NET)
-	add_subdirectory(Net)
+	add_subdirectory(platform/Net)
 	list(APPEND Poco_COMPONENTS "Net")
 endif()
 
+# macchina.io
+
+if(ENABLE_SERIAL)
+	add_subdirectory(platform/Serial)
+	list(APPEND Poco_COMPONENTS "Serial")
+endif()
+
 if(EXISTS ${PROJECT_SOURCE_DIR}/MongoDB AND ENABLE_MONGODB)
-	add_subdirectory(MongoDB)
+	add_subdirectory(platform/MongoDB)
 	list(APPEND Poco_COMPONENTS "MongoDB")
 endif()
 
 if(EXISTS ${PROJECT_SOURCE_DIR}/Redis AND ENABLE_REDIS)
-	add_subdirectory(Redis)
+	add_subdirectory(platform/Redis)
 	list(APPEND Poco_COMPONENTS "Redis")
 endif()
 
 if(EXISTS ${PROJECT_SOURCE_DIR}/PDF AND ENABLE_PDF)
-	add_subdirectory(PDF)
+	add_subdirectory(platform/PDF)
 	list(APPEND Poco_COMPONENTS "PDF")
 endif()
 
 if(EXISTS ${PROJECT_SOURCE_DIR}/JWT AND ENABLE_JWT)
-	add_subdirectory(JWT)
+	add_subdirectory(platform/JWT)
 	list(APPEND Poco_COMPONENTS "JWT")
 endif()
 
 #NetSSL
 
 if(WIN32 AND EXISTS ${PROJECT_SOURCE_DIR}/NetSSL_Win AND ENABLE_NETSSL_WIN)
-	add_subdirectory(NetSSL_Win)
+	add_subdirectory(platform/NetSSL_Win)
 	list(APPEND Poco_COMPONENTS "NetSSL_Win")
 endif(WIN32 AND EXISTS ${PROJECT_SOURCE_DIR}/NetSSL_Win AND ENABLE_NETSSL_WIN)
 
 if(OPENSSL_FOUND)
 	if(EXISTS ${PROJECT_SOURCE_DIR}/NetSSL_OpenSSL AND ENABLE_NETSSL)
-		add_subdirectory(NetSSL_OpenSSL)
+		add_subdirectory(platform/NetSSL_OpenSSL)
 		list(APPEND Poco_COMPONENTS "NetSSL_OpenSSL")
 	endif()
 	if(EXISTS ${PROJECT_SOURCE_DIR}/Crypto AND ENABLE_CRYPTO)
-		add_subdirectory(Crypto)
+		add_subdirectory(platform/Crypto)
 		list(APPEND Poco_COMPONENTS "Crypto")
 	endif()
 endif(OPENSSL_FOUND)
 
 if(EXISTS ${PROJECT_SOURCE_DIR}/Data AND ENABLE_DATA)
-	add_subdirectory(Data)
+	add_subdirectory(platform/Data)
 	list(APPEND Poco_COMPONENTS "Data")
 endif()
 
 if(EXISTS ${PROJECT_SOURCE_DIR}/ActiveRecord AND ENABLE_ACTIVERECORD)
-	add_subdirectory(ActiveRecord)
+	add_subdirectory(platform/ActiveRecord)
 	list(APPEND Poco_COMPONENTS "ActiveRecord")
 endif()
 
 if(EXISTS ${PROJECT_SOURCE_DIR}/ActiveRecord/Compiler AND ENABLE_ACTIVERECORD_COMPILER)
-	add_subdirectory(ActiveRecord/Compiler)
+	add_subdirectory(platform/ActiveRecord/Compiler)
 	list(APPEND Poco_COMPONENTS "ActiveRecordCompiler")
 endif()
 
 if(EXISTS ${PROJECT_SOURCE_DIR}/SevenZip AND ENABLE_SEVENZIP)
-	add_subdirectory(SevenZip)
+	add_subdirectory(platform/SevenZip)
 	list(APPEND Poco_COMPONENTS "SevenZip")
 endif()
 
 if(EXISTS ${PROJECT_SOURCE_DIR}/Zip AND ENABLE_ZIP)
-	add_subdirectory(Zip)
+	add_subdirectory(platform/Zip)
 	list(APPEND Poco_COMPONENTS "Zip")
 endif()
 
 if(APRUTIL_FOUND AND APACHE_FOUND AND
 	EXISTS ${PROJECT_SOURCE_DIR}/ApacheConnector AND ENABLE_APACHECONNECTOR)
-	add_subdirectory(ApacheConnector)
+	add_subdirectory(platform/ApacheConnector)
 	list(APPEND Poco_COMPONENTS "ApacheConnector")
 endif()
 
 if(EXISTS ${PROJECT_SOURCE_DIR}/CppParser AND ENABLE_CPPPARSER)
-	add_subdirectory(CppParser)
+	add_subdirectory(platform/CppParser)
 	list(APPEND Poco_COMPONENTS "CppParser")
 endif()
 
 if(EXISTS ${PROJECT_SOURCE_DIR}/PocoDoc AND ENABLE_POCODOC)
-	add_subdirectory(PocoDoc)
+	add_subdirectory(platform/PocoDoc)
 	list(APPEND Poco_COMPONENTS "PocoDoc")
 endif()
 
 if(EXISTS ${PROJECT_SOURCE_DIR}/PageCompiler AND ENABLE_PAGECOMPILER)
-	add_subdirectory(PageCompiler)
+	add_subdirectory(platform/PageCompiler)
 	list(APPEND Poco_COMPONENTS "PageCompiler")
 endif()
 
 if(EXISTS ${PROJECT_SOURCE_DIR}/PageCompiler/File2Page AND ENABLE_PAGECOMPILER_FILE2PAGE)
-	add_subdirectory(PageCompiler/File2Page)
+	add_subdirectory(platform/PageCompiler/File2Page)
 	list(APPEND Poco_COMPONENTS "File2Page")
 endif()
 
 if(EXISTS ${PROJECT_SOURCE_DIR}/Encodings/Compiler AND ENABLE_ENCODINGS_COMPILER)
-	add_subdirectory(Encodings/Compiler)
+	add_subdirectory(platform/Encodings/Compiler)
 	list(APPEND Poco_COMPONENTS "EncodingsCompiler")
 endif()
 
@@ -432,19 +375,6 @@ configure_file(
 add_custom_target(uninstall
 	"${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
 )
-
-#############################################################
-# Enable packaging
-
-include(InstallRequiredSystemLibraries)
-
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Poco Libraries")
-set(CPACK_PACKAGE_VENDOR "Applied Informatics Software Engineering GmbH")
-set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README")
-set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
-set(CPACK_PACKAGE_INSTALL_DIRECTORY "/usr/local")
-
-include(CPack)
 
 #############################################################
 # cmake config files
